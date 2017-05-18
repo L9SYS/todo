@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <link rel="stylesheet" href="css/bootstrap.css">
+  <style type="text/css">
+    body{
+      background-color:#EEEEEE;
+    }
+    .todolist{
+        background-color:#FFF;
+        padding:20px 20px 10px 20px;
+        margin-top:30px;
+    }
+    .todolist h1{
+        margin:0;
+        padding-bottom:20px;
+        text-align:center;
+    }
+    .form-control{
+        border-radius:0;
+        margin:5px 0px;
+    }
+    li.ui-state-default{
+        background:#fff;
+        border:none;
+        border-bottom:1px solid #ddd;
+    }
+    li.ui-state-default:last-child{
+        border-bottom:none;
+    }
+    .todo-footer{
+        background-color:#F4FCE8;
+        margin:0 -20px -10px -20px;
+        padding: 10px 20px;
+    }
+    #done-items li{
+        padding:10px 0;
+        border-bottom:1px solid #ddd;
+        text-decoration:line-through;
+    }
+    #done-items li:last-child{
+        border-bottom:none;
+    }
+  </style>
+
+  <script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="js/tether.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="todolist not-done">
+          <h1>Todos</h1>
+
+          <input id="taskTitle" type="text" class="form-control add-todo" placeholder="Add Title (Required field)">
+          <input id="taskBody" type="text" class="form-control add-todo" placeholder="Add Body">
+          <button id="addTask" class="btn btn-success">Add Task</button>
+          <button id="checkAll" class="btn btn-success">Mark all as done</button>
+          <hr>
+          <ul id="sortable" class="list-unstyled">
+          </ul>
+          <div class="todo-footer">
+            <strong><span class="count-todos"></span></strong> Items Left
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="todolist">
+          <h1>Already Done</h1>
+          <ul id="done-items" class="list-unstyled">
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+
+    var Task = function(title, body, done){
+      this.title = title;
+      this.body = body || '';
+      this.done = done || false;
+      return this;
+    };
+
+    var List = {
+
+      getList: function(){
+        return todoListLS = JSON.parse(localStorage.getItem('todoList')) || [];
+      },
+
+      setList: function(todo_list){
+        this.todo_list = todo_list || [];
+        localStorage.setItem('todoList', JSON.stringify(this.todo_list));
+      },
+      addTask: function(task_t, task_b){
+
+        this.task_t = task_t || '';
+        if(this.task_t == ''){
+          console.log('No title, no task!');
+          return List.initList()
+        }
+
+        this.task_b = task_b || '';
+        this.todoList = List.getList();
+        this.task = new Task(this.task_t, this.task_b, false);
+        this.todoList.push(this.task);
+        List.setList(this.todoList);
+        return List.initList()
+      },
+
+      delTask: function(id){
+
+        this.id = id || null;
+        if(!this.id){
+          console.log('No ID, no delTask!');
+          return List.initList();
+        }
+
+        this.todoList = List.getList();
+        this.todoList.splice(this.id, 1);
+        List.setList(this.todoList);
+        return List.initList()
+      },
+
+      editTask: function(id, task_t, task_b){
+
+        this.id = id || null;
+        this.task_t = task_t || '';
+        if(!this.id){
+          console.log('No ID, no editTask!');
+          return List.initList();
+        }
+        if(this.task_t == ''){
+          console.log('No title, no editTask!');
+          return List.initList()
+        }
+
+        this.task_b = task_b || '';
+
+        this.task = new Task(this.task_t, this.task_b);
+        this.todoList = List.getList();
+        this.todoList[this.id].title = this.task_t;
+        this.todoList[this.id].body = this.task_b;
+        List.setList(this.todoList);
+        return List.initList()
+      },
+
+      setDone: function(id){
+        this.id = id || null;
+        if(!this.id){
+          console.log('No ID, no setDone!');
+          return List.initList();
+        }
+
+        this.todoList = List.getList();
+//        this.todoList[this.id].done = true;
+        this.todoList[this.id].done = (this.todoList[this.id].done) ? false : true;
+        List.setList(this.todoList);
+        return List.initList()
+      },
+      setDone_all: function(){
+        this.todoList = List.getList();
+
+        for(var i=0; i<this.todoList.length; i++) {
+           this.todoList[i].done = true
+        }
+        List.setList(this.todoList);
+        return List.initList()
+      },
+
+      sortList: function (){
+        var todoList = List.getList();
+        var ord = -1;
+        var key_name ="title";
+
+        todoList.sort(function(a,b) {
+          var res = (a[key_name] < b[key_name]) ? -1 : ((b[key_name] < a[key_name]) ? 1 : 0);
+          return res * ord;
+        });
+        List.setList(todoList);
+      },
+      countTaks: function(){
+        this.cont_task = 0;
+        this.todoList = List.getList();
+        for(var i=0; i<this.todoList.length; i++) {
+          if (this.todoList[i].done !== true) this.cont_task++
+        }
+        return this.cont_task
+      },
+      initList: function(){
+        // jQuery
+        List.sortList();
+        this.todoList = List.getList();
+        this.html_list = '';
+        this.html_list_done = '';
+        $('#sortable').html(this.html_list);
+        $('#done-items').html(this.html_list_done);
+
+        for(var i=0; i<this.todoList.length; i++) {
+          if (this.todoList[i].done !== true){
+            this.html_list += '<li rowid="' + i + '" class="ui-state-default">' +
+            '<div class="checkbox"><input type="checkbox" value="Done" />' +
+            '<input type="text" class="form-control task-title" value="' + this.todoList[i].title + '" readonly="readonly" />' +
+            '<input type="text" class="form-control task-body" value="' + this.todoList[i].body + '" readonly="readonly" />' +
+            '<button type="button" class="tesk-edit-btn btn btn-default btn-sm">Edit</button>' +
+            '</div></li>';
+          }else{
+            this.html_list_done += '<li rowid="' + i + '">' +
+              '<input type="text" class="form-control task-title" value="' + this.todoList[i].title + '" readonly="readonly" />' +
+              '<input type="text" class="form-control task-body" value="' + this.todoList[i].body + '" readonly="readonly" />' +
+              '<button type="button" class="remove-item btn btn-default btn-sm"><span class="glyphicon glyphicon-remove"></span>Remove</button></li>';
+          }
+        }
+        $('.count-todos').html(List.countTaks());
+        $('#sortable').append(this.html_list);
+        $('#done-items').append(this.html_list_done);
+      }
+    };
+  </script>
+  <script type="text/javascript">
+    List.initList();
+
+    $('#checkAll').click(function(){
+      List.setDone_all();
+    });
+
+    $('#addTask').on('click',function () {
+      var title = $('#taskTitle').val();
+      var body = $('#taskBody').val();
+      List.addTask(title,body);
+      $('#taskTitle').val('');
+      $('#taskBody').val('');
+    });
+
+    $('.todolist').on('change','#sortable li input[type="checkbox"]',function(){
+      if($(this).prop('checked')){
+        List.setDone($(this).closest('li').attr('rowid'));
+      }
+    });
+    $('.todolist').on('click','.remove-item',function(){
+      List.delTask($(this).closest('li').attr('rowid'));
+    });
+    $('.todolist').on('click','.tesk-edit-btn',function(){
+      var tt = $(this).parent().find('.task-title');
+      var tb = $(this).parent().find('.task-body');
+      if ($(this).html() == 'Edit'){
+        tt.removeAttr('readonly');
+        tb.removeAttr('readonly');
+        $(this).html('Save');
+      }else{
+        List.editTask($(this).closest('li').attr('rowid'), tt.val(), tb.val());
+        $(this).html('Edit');
+      }
+    });
+  </script>
+
+</body>
+
+</html>
